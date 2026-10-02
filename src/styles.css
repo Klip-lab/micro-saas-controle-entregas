@@ -1,0 +1,4 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f7f7f7; color: #171717; }
+main { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
+h1 { margin-bottom: 8px; }

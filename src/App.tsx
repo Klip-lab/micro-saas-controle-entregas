@@ -1,52 +1,55 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface Delivery {
   id: string;
   title: string;
-  responsible: string;
-  dueDate: string;
+  assignee: string;
+  deadline: string;
   status: 'Pendente' | 'Em trânsito' | 'Entregue' | 'Cancelado';
 }
 
 export default function App() {
-  const [deliveries, setDeliveries] = useState<Delivery[]>([
-    {
-      id: '1',
-      title: 'Pedido #101 - Eletrônicos',
-      responsible: 'Carlos Silva',
-      dueDate: '2025-06-01',
-      status: 'Pendente'
-    },
-    {
-      id: '2',
-      title: 'Pedido #102 - Documentos',
-      responsible: 'Ana Souza',
-      dueDate: '2025-05-28',
-      status: 'Em trânsito'
+  const [deliveries, setDeliveries] = useState<Delivery[]>(() => {
+    const saved = localStorage.getItem('@micro-saas/deliveries');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
     }
-  ]);
+    return [
+      { id: '1', title: 'Entrega de Documentos - Centro', assignee: 'Carlos Silva', deadline: '2025-03-10', status: 'Em trânsito' },
+      { id: '2', title: 'Peças de Reposição - Zona Sul', assignee: 'Ana Souza', deadline: '2025-03-12', status: 'Pendente' }
+    ];
+  });
 
   const [title, setTitle] = useState('');
-  const [responsible, setResponsible] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [status, setStatus] = useState<'Pendente' | 'Em trânsito' | 'Entregue' | 'Cancelado'>('Pendente');
+  const [assignee, setAssignee] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [status, setStatus] = useState<Delivery['status']>('Pendente');
+  const [filterStatus, setFilterStatus] = useState<string>('TODOS');
+
+  useEffect(() => {
+    localStorage.setItem('@micro-saas/deliveries', JSON.stringify(deliveries));
+  }, [deliveries]);
 
   const handleAddDelivery = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !responsible.trim() || !dueDate) return;
+    if (!title.trim() || !assignee.trim() || !deadline) return;
 
     const newDelivery: Delivery = {
       id: Date.now().toString(),
-      title,
-      responsible,
-      dueDate,
+      title: title.trim(),
+      assignee: assignee.trim(),
+      deadline,
       status
     };
 
     setDeliveries([newDelivery, ...deliveries]);
     setTitle('');
-    setResponsible('');
-    setDueDate('');
+    setAssignee('');
+    setDeadline('');
     setStatus('Pendente');
   };
 
@@ -54,80 +57,119 @@ export default function App() {
     setDeliveries(deliveries.map(d => d.id === id ? { ...d, status: newStatus } : d));
   };
 
+  const filteredDeliveries = filterStatus === 'TODOS' 
+    ? deliveries 
+    : deliveries.filter(d => d.status === filterStatus);
+
   return (
     <main>
-      <header style={{ marginBottom: '24px' }}>
+      <header style={{ marginBottom: '32px', borderBottom: '1px solid #ddd', paddingBottom: '16px' }}>
         <h1>Micro-SaaS de Controle de Entregas</h1>
-        <p>Gerencie entregas, responsáveis, prazos e status em uma interface simples.</p>
+        <p>Centralize o acompanhamento de entregas, responsáveis, prazos e status em uma interface simples.</p>
       </header>
 
-      <section style={{ background: '#fff', padding: '20px', borderRadius: '8px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ marginTop: 0, fontSize: '1.25rem' }}>Cadastrar Nova Entrega</h2>
-        <form onSubmit={handleAddDelivery} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', alignItems: 'end' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '4px' }}>Descrição da Entrega</label>
+      <section style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '32px' }}>
+        <h2>Cadastrar Nova Entrega</h2>
+        <form onSubmit={handleAddDelivery} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500 }}>Descrição da Entrega</label>
             <input 
-              type="text" 
-              value={title} 
-              onChange={e => setTitle(e.target.value)} 
-              placeholder="Ex: Caixa de peças" 
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Ex: Entrega de Equipamento X"
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '4px' }}>Responsável</label>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500 }}>Responsável</label>
             <input 
-              type="text" 
-              value={responsible} 
-              onChange={e => setResponsible(e.target.value)} 
-              placeholder="Nome do entregador" 
+              type="text"
+              value={assignee}
+              onChange={e => setAssignee(e.target.value)}
+              placeholder="Ex: João Motorista"
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '4px' }}>Prazo</label>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500 }}>Prazo Limite</label>
             <input 
-              type="date" 
-              value={dueDate} 
-              onChange={e => setDueDate(e.target.value)} 
+              type="date"
+              value={deadline}
+              onChange={e => setDeadline(e.target.value)}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
             />
           </div>
-          <button type="submit" style={{ padding: '9px 16px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>
-            Cadastrar
-          </button>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500 }}>Status Inicial</label>
+            <select 
+              value={status}
+              onChange={e => setStatus(e.target.value as Delivery['status'])}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value="Pendente">Pendente</option>
+              <option value="Em trânsito">Em trânsito</option>
+              <option value="Entregue">Entregue</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+          <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+            <button 
+              type="submit"
+              style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              Cadastrar Entrega
+            </button>
+          </div>
         </form>
       </section>
 
       <section style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ marginTop: 0, fontSize: '1.25rem' }}>Acompanhamento de Entregas</h2>
-        {deliveries.length === 0 ? (
-          <p style={{ color: '#666' }}>Nenhuma entrega cadastrada no momento.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2>Acompanhamento de Entregas</h2>
+          <div>
+            <label style={{ marginRight: '8px', fontWeight: 500 }}>Filtrar Status:</label>
+            <select 
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value="TODOS">Todos</option>
+              <option value="Pendente">Pendente</option>
+              <option value="Em trânsito">Em trânsito</option>
+              <option value="Entregue">Entregue</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+        </div>
+
+        {filteredDeliveries.length === 0 ? (
+          <p style={{ color: '#666', textAlign: 'center', padding: '24px' }}>Nenhuma entrega encontrada.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid #eee', color: '#555', fontSize: '0.875rem' }}>
-                  <th style={{ padding: '10px' }}>Entrega</th>
-                  <th style={{ padding: '10px' }}>Responsável</th>
-                  <th style={{ padding: '10px' }}>Prazo</th>
-                  <th style={{ padding: '10px' }}>Status</th>
+                <tr style={{ borderBottom: '2px solid #eee', color: '#555' }}>
+                  <th style={{ padding: '12px' }}>Entrega</th>
+                  <th style={{ padding: '12px' }}>Responsável</th>
+                  <th style={{ padding: '12px' }}>Prazo</th>
+                  <th style={{ padding: '12px' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {deliveries.map(d => (
+                {filteredDeliveries.map(d => (
                   <tr key={d.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '10px', fontWeight: '500' }}>{d.title}</td>
-                    <td style={{ padding: '10px' }}>{d.responsible}</td>
-                    <td style={{ padding: '10px' }}>{d.dueDate}</td>
-                    <td style={{ padding: '10px' }}>
+                    <td style={{ padding: '12px', fontWeight: 500 }}>{d.title}</td>
+                    <td style={{ padding: '12px' }}>{d.assignee}</td>
+                    <td style={{ padding: '12px' }}>{d.deadline}</td>
+                    <td style={{ padding: '12px' }}>
                       <select 
-                        value={d.status} 
+                        value={d.status}
                         onChange={e => handleStatusChange(d.id, e.target.value as Delivery['status'])}
-                        style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc', background: '#fff' }}
+                        style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc', background: '#f9f9f9' }}
                       >
                         <option value="Pendente">Pendente</option>
                         <option value="Em trânsito">Em trânsito</option>

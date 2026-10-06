@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import App from "./App";
 
-describe("App Delivery Management", () => {
-  it("renderiza o componente principal sem erros", () => {
-    expect(App).toBeTypeOf("function");
+describe("App Component", () => {
+  it("is a valid component function", () => {
+    expect(typeof App).toBe("function");
   });
 });

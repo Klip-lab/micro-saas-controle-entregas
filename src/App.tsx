@@ -4,86 +4,106 @@ interface Delivery {
   id: string;
   title: string;
   responsible: string;
-  deadline: string;
+  dueDate: string;
   status: 'Pendente' | 'Em Trânsito' | 'Entregue';
 }
 
 export default function App() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([
-    { id: '1', title: 'Pedido #101', responsible: 'Carlos Silva', deadline: '2025-03-15', status: 'Pendente' },
-    { id: '2', title: 'Pedido #102', responsible: 'Ana Souza', deadline: '2025-03-16', status: 'Em Trânsito' }
+    {
+      id: '1',
+      title: 'Pedido #101 - Eletrônicos',
+      responsible: 'Carlos Silva',
+      dueDate: '2025-12-31',
+      status: 'Pendente',
+    },
   ]);
 
   const [title, setTitle] = useState('');
   const [responsible, setResponsible] = useState('');
-  const [deadline, setDeadline] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState<'Pendente' | 'Em Trânsito' | 'Entregue'>('Pendente');
 
   const handleAddDelivery = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !responsible.trim() || !deadline) return;
+    if (!title.trim() || !responsible.trim() || !dueDate) return;
 
     const newDelivery: Delivery = {
       id: Date.now().toString(),
       title,
       responsible,
-      deadline,
-      status
+      dueDate,
+      status,
     };
 
     setDeliveries([...deliveries, newDelivery]);
     setTitle('');
     setResponsible('');
-    setDeadline('');
+    setDueDate('');
     setStatus('Pendente');
   };
 
   const handleStatusChange = (id: string, newStatus: 'Pendente' | 'Em Trânsito' | 'Entregue') => {
-    setDeliveries(deliveries.map(d => d.id === id ? { ...d, status: newStatus } : d));
+    setDeliveries(
+      deliveries.map((d) => (d.id === id ? { ...d, status: newStatus } : d))
+    );
   };
 
   return (
     <main>
-      <header style={{ marginBottom: '24px' }}>
-        <h1>Micro-SaaS de Controle de Entregas</h1>
-        <p>Centralize o acompanhamento de entregas, responsáveis, prazos e status.</p>
-      </header>
+      <h1>Micro-SaaS de Controle de Entregas</h1>
+      <p>Gerencie entregas, responsáveis, prazos e status com clareza.</p>
 
       <section style={{ background: '#fff', padding: '20px', borderRadius: '8px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <h2>Cadastrar Nova Entrega</h2>
-        <form onSubmit={handleAddDelivery} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', alignItems: 'end', marginTop: '12px' }}>
+        <form onSubmit={handleAddDelivery} style={{ display: 'grid', gap: '12px', gridTemplateColumns: '1fr 1fr' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>Título / Descrição</label>
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Descrição da Entrega</label>
             <input
               type="text"
               value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Ex: Entrega de Documentos"
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Caixa de Documentos"
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              required
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>Responsável</label>
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Responsável pela Entrega</label>
             <input
               type="text"
               value={responsible}
-              onChange={e => setResponsible(e.target.value)}
-              placeholder="Nome do responsável"
+              onChange={(e) => setResponsible(e.target.value)}
+              placeholder="Ex: Ana Souza"
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              required
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>Prazo</label>
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Prazo</label>
             <input
               type="date"
-              value={deadline}
-              onChange={e => setDeadline(e.target.value)}
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              required
             />
           </div>
           <div>
-            <button type="submit" style={{ padding: '9px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              Cadastrar
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Status inicial</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as any)}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', background: '#fff' }}
+            >
+              <option value="Pendente">Pendente</option>
+              <option value="Em Trânsito">Em Trânsito</option>
+              <option value="Entregue">Entregue</option>
+            </select>
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <button type="submit" style={{ padding: '10px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
+              Salvar Entrega
             </button>
           </div>
         </form>
@@ -91,43 +111,29 @@ export default function App() {
 
       <section style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <h2>Acompanhamento de Entregas</h2>
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '12px' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e5e7eb', textAlign: 'left' }}>
-              <th style={{ padding: '8px' }}>Entrega</th>
-              <th style={{ padding: '8px' }}>Responsável</th>
-              <th style={{ padding: '8px' }}>Prazo</th>
-              <th style={{ padding: '8px' }}>Status</th>
-              <th style={{ padding: '8px' }}>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {deliveries.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={{ padding: '16px', textAlign: 'center', color: '#6b7280' }}>Nenhuma entrega cadastrada.</td>
+        {deliveries.length === 0 ? (
+          <p>Nenhuma entrega cadastrada.</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '12px' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid #e5e7eb', textAlign: 'left' }}>
+                <th style={{ padding: '8px' }}>Entrega</th>
+                <th style={{ padding: '8px' }}>Responsável</th>
+                <th style={{ padding: '8px' }}>Prazo</th>
+                <th style={{ padding: '8px' }}>Status</th>
               </tr>
-            ) : (
-              deliveries.map(d => (
-                <tr key={d.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={{ padding: '8px' }}>{d.title}</td>
-                  <td style={{ padding: '8px' }}>{d.responsible}</td>
-                  <td style={{ padding: '8px' }}>{d.deadline}</td>
-                  <td style={{ padding: '8px' }}>
-                    <span style={{
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      background: d.status === 'Entregue' ? '#d1fae5' : d.status === 'Em Trânsito' ? '#dbeafe' : '#fef3c7',
-                      color: d.status === 'Entregue' ? '#065f46' : d.status === 'Em Trânsito' ? '#1e40af' : '#92400e'
-                    }}>
-                      {d.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '8px' }}>
+            </thead>
+            <tbody>
+              {deliveries.map((delivery) => (
+                <tr key={delivery.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <td style={{ padding: '12px 8px' }}>{delivery.title}</td>
+                  <td style={{ padding: '12px 8px' }}>{delivery.responsible}</td>
+                  <td style={{ padding: '12px 8px' }}>{delivery.dueDate}</td>
+                  <td style={{ padding: '12px 8px' }}>
                     <select
-                      value={d.status}
-                      onChange={e => handleStatusChange(d.id, e.target.value as any)}
-                      style={{ padding: '4px', borderRadius: '4px', border: '1px solid #ccc' }}
+                      value={delivery.status}
+                      onChange={(e) => handleStatusChange(delivery.id, e.target.value as any)}
+                      style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc', background: '#f9fafb' }}
                     >
                       <option value="Pendente">Pendente</option>
                       <option value="Em Trânsito">Em Trânsito</option>
@@ -135,10 +141,10 @@ export default function App() {
                     </select>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
     </main>
   );

@@ -45,24 +45,30 @@ select throws_ok(
   $$ insert into public.deliveries (organization_id, created_by, title, recipient, status)
      values ('b0000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'Entrega invasiva', 'Cliente B', 'pending') $$,
   '42501',
+  'new row violates row-level security policy for table "deliveries"',
   'tenant A cannot insert into tenant B'
 );
 
+-- An UPDATE outside the tenant's RLS visibility must affect no rows.
+update public.deliveries
+set title = 'Alterada indevidamente'
+where id = 'b1000000-0000-4000-8000-000000000002';
+
+select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', true);
 select is(
-  (with changed as (
-    update public.deliveries set title = 'Alterada indevidamente'
-    where id = 'b1000000-0000-4000-8000-000000000002' returning id
-  ) select count(*)::int from changed),
-  0,
+  (select title from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'),
+  'Entrega B',
   'tenant A cannot update tenant B delivery'
 );
 
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+delete from public.deliveries
+where id = 'b1000000-0000-4000-8000-000000000002';
+
+select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', true);
 select is(
-  (with removed as (
-    delete from public.deliveries
-    where id = 'b1000000-0000-4000-8000-000000000002' returning id
-  ) select count(*)::int from removed),
-  0,
+  (select count(*)::int from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'),
+  1,
   'tenant A cannot delete tenant B delivery'
 );
 

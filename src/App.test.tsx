@@ -39,7 +39,7 @@ describe("Controle de Entregas authentication flow", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Controle de Entregas" });
     const sendButton = screen.getByRole("button", { name: "Enviar código" });
-    expect(sendButton).toBeDisabled();
+    fireEvent.click(sendButton);
     expect(mocks.signInWithOtp).not.toHaveBeenCalled();
   });
 
@@ -55,7 +55,7 @@ describe("Controle de Entregas authentication flow", () => {
       email: "operador@example.com",
       options: { shouldCreateUser: true },
     }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Enviamos um código para seu e-mail");
+    expect((await screen.findByRole("status")).textContent).toContain("Enviamos um código para seu e-mail");
   });
 
   it("submits the one-time code for verification instead of treating the UI as authenticated", async () => {

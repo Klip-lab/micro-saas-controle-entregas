@@ -18,3 +18,8 @@ jobs:
       - run: npm install
       - run: npm test
       - run: npm run build
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      - run: supabase test db

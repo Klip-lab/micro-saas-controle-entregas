@@ -1,7 +1,7 @@
 {
   "name": "micro-saas-controle-entregas",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "vite": "^7.3.5"
@@ -17,8 +18,8 @@
   "devDependencies": {
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7",
-    "@vitejs/plugin-react": "^5.1.0"
+    "vitest": "^3.2.7"
   }
 }

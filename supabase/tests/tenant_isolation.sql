@@ -45,7 +45,6 @@ select throws_ok(
   $$ insert into public.deliveries (organization_id, created_by, title, recipient, status)
      values ('b0000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'Entrega invasiva', 'Cliente B', 'pending') $$,
   '42501',
-  null,
   'tenant A cannot insert into tenant B'
 );
 

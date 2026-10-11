@@ -123,6 +123,9 @@ create policy deliveries_delete_member
   on public.deliveries for delete to authenticated
   using (public.is_organization_member(organization_id));
 
+revoke all on public.organizations from anon, authenticated;
+revoke all on public.organization_members from anon, authenticated;
+revoke all on public.deliveries from anon, authenticated;
 grant select on public.organizations to authenticated;
 grant select on public.organization_members to authenticated;
 grant select, insert, update, delete on public.deliveries to authenticated;

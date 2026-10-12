@@ -98,7 +98,7 @@ select is(
   'acceptance adds the invited email to the target organization'
 );
 
-select is((select count(*)::int from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'), 1, 'tenant A cannot delete tenant B delivery');
+select is((select count(*)::int from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'), 0, 'invited user cannot see unrelated tenant B delivery');
 
 select * from finish();
 rollback;

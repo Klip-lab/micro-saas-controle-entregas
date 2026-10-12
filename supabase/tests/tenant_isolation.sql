@@ -1,13 +1,14 @@
 begin;
 
-select plan(10);
+select plan(14);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
   raw_app_meta_data, raw_user_meta_data, created_at, updated_at
 ) values
   ('10000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'tenant-a@example.test', '', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
-  ('20000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'tenant-b@example.test', '', now(), '{}'::jsonb, '{}'::jsonb, now(), now())
+  ('20000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'tenant-b@example.test', '', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
+  ('30000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'tenant-c@example.test', '', now(), '{}'::jsonb, '{}'::jsonb, now(), now())
 on conflict (id) do nothing;
 
 insert into public.organizations (id, name, created_by) values
@@ -33,6 +34,7 @@ select has_trigger('public', 'deliveries', 'deliveries_set_updated_at', 'deliver
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claims', '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","email":"tenant-a@example.test"}', true);
 
 select is((select count(*)::int from public.deliveries), 1, 'tenant A can only read deliveries from organizations it belongs to');
 
@@ -50,10 +52,16 @@ select throws_ok(
   'tenant A cannot insert into tenant B'
 );
 
+select lives_ok(
+  $$ select public.invite_organization_member('a0000000-0000-4000-8000-000000000001', 'tenant-c@example.test') $$,
+  'organization owner can invite an email'
+);
+
 update public.deliveries set title = 'Alterada indevidamente'
 where id = 'b1000000-0000-4000-8000-000000000002';
 
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claims', '{"sub":"20000000-0000-4000-8000-000000000002","role":"authenticated","email":"tenant-b@example.test"}', true);
 
 select lives_ok(
   $$ update public.deliveries set status = 'in_transit' where id = 'a1000000-0000-4000-8000-000000000001' $$,
@@ -67,12 +75,29 @@ select throws_ok(
   'a member cannot reassign the delivery creator'
 );
 
+select throws_ok(
+  $$ select public.invite_organization_member('a0000000-0000-4000-8000-000000000001', 'someone@example.test') $$,
+  '42501',
+  'Only organization owners can invite members',
+  'non-owner cannot invite members'
+);
+
 select is((select title from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'), 'Entrega B', 'tenant A cannot update tenant B delivery');
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claims', '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","email":"tenant-a@example.test"}', true);
 delete from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002';
 
-select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000003', true);
+select set_config('request.jwt.claims', '{"sub":"30000000-0000-4000-8000-000000000003","role":"authenticated","email":"tenant-c@example.test"}', true);
+
+select lives_ok($$ select public.accept_organization_invitations() $$, 'invited user can accept their own invitation');
+select is(
+  (select count(*)::int from public.organization_members where organization_id = 'a0000000-0000-4000-8000-000000000001' and user_id = '30000000-0000-4000-8000-000000000003'),
+  1,
+  'acceptance adds the invited email to the target organization'
+);
+
 select is((select count(*)::int from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'), 1, 'tenant A cannot delete tenant B delivery');
 
 select * from finish();

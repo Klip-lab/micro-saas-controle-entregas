@@ -18,7 +18,7 @@ on conflict (id) do nothing;
 insert into public.organization_members (organization_id, user_id, role) values
   ('a0000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'owner'),
   ('b0000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'owner'),
-  ('a0000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'member')
+  ('a0000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000002', 'member')
 on conflict (organization_id, user_id) do nothing;
 
 insert into public.deliveries (id, organization_id, created_by, title, recipient, status) values
@@ -34,11 +34,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select is(
-  (select count(*)::int from public.deliveries),
-  1,
-  'tenant A can only read deliveries from organizations it belongs to'
-);
+select is((select count(*)::int from public.deliveries), 1, 'tenant A can only read deliveries from organizations it belongs to');
 
 select lives_ok(
   $$ insert into public.deliveries (organization_id, created_by, title, recipient, status)
@@ -54,9 +50,7 @@ select throws_ok(
   'tenant A cannot insert into tenant B'
 );
 
--- An UPDATE outside the tenant's RLS visibility must affect no rows.
-update public.deliveries
-set title = 'Alterada indevidamente'
+update public.deliveries set title = 'Alterada indevidamente'
 where id = 'b1000000-0000-4000-8000-000000000002';
 
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', true);
@@ -73,22 +67,13 @@ select throws_ok(
   'a member cannot reassign the delivery creator'
 );
 
-select is(
-  (select title from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'),
-  'Entrega B',
-  'tenant A cannot update tenant B delivery'
-);
+select is((select title from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'), 'Entrega B', 'tenant A cannot update tenant B delivery');
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
-delete from public.deliveries
-where id = 'b1000000-0000-4000-8000-000000000002';
+delete from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002';
 
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', true);
-select is(
-  (select count(*)::int from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'),
-  1,
-  'tenant A cannot delete tenant B delivery'
-);
+select is((select count(*)::int from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'), 1, 'tenant A cannot delete tenant B delivery');
 
 select * from finish();
 rollback;

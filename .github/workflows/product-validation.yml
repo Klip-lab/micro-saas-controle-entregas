@@ -16,10 +16,8 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - name: Report dependency advisories
-        run: |
-          npm audit --json > /tmp/npm-audit.json || true
-          node -e "const a=require('/tmp/npm-audit.json'); for (const [name,v] of Object.entries(a.vulnerabilities||{})) console.log(JSON.stringify({name,severity:v.severity,range:v.range,fixAvailable:v.fixAvailable}))"
+      - name: Audit dependency vulnerabilities
+        run: npm audit --audit-level=high
       - run: npm test
       - run: npm run build
       - uses: supabase/setup-cli@v1

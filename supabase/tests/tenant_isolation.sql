@@ -1,6 +1,6 @@
 begin;
 
-select plan(7);
+select plan(10);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -18,13 +18,17 @@ on conflict (id) do nothing;
 insert into public.organization_members (organization_id, user_id, role) values
   ('a0000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'owner'),
   ('b0000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'owner'),
-  ('a0000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000002', 'member')
+  ('a0000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'member')
 on conflict (organization_id, user_id) do nothing;
 
 insert into public.deliveries (id, organization_id, created_by, title, recipient, status) values
   ('a1000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'Entrega A', 'Cliente A', 'pending'),
   ('b1000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'Entrega B', 'Cliente B', 'pending')
 on conflict (id) do nothing;
+
+select has_index('public', 'organizations', 'organizations_created_by_idx', 'organizations creator foreign key is indexed');
+select has_index('public', 'deliveries', 'deliveries_created_by_idx', 'deliveries creator foreign key is indexed');
+select has_trigger('public', 'deliveries', 'deliveries_set_updated_at', 'delivery updates automatically refresh updated_at');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);

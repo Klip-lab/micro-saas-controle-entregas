@@ -23,7 +23,7 @@ for each row execute function public.prevent_delivery_creator_change();
 drop policy if exists deliveries_update_member on public.deliveries;
 create policy deliveries_update_member
   on public.deliveries for update to authenticated
-  using (public.is_organization_member(organization_id))
-  with check (public.is_organization_member(organization_id));
+  using (private.is_organization_member(organization_id))
+  with check (private.is_organization_member(organization_id));
 
 commit;

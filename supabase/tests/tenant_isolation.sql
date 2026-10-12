@@ -1,6 +1,6 @@
 begin;
 
-select plan(5);
+select plan(7);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -17,7 +17,8 @@ on conflict (id) do nothing;
 
 insert into public.organization_members (organization_id, user_id, role) values
   ('a0000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'owner'),
-  ('b0000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'owner')
+  ('b0000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'owner'),
+  ('a0000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000002', 'member')
 on conflict (organization_id, user_id) do nothing;
 
 insert into public.deliveries (id, organization_id, created_by, title, recipient, status) values
@@ -32,7 +33,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select is(
   (select count(*)::int from public.deliveries),
   1,
-  'tenant A can only read tenant A deliveries'
+  'tenant A can only read deliveries from organizations it belongs to'
 );
 
 select lives_ok(
@@ -55,6 +56,19 @@ set title = 'Alterada indevidamente'
 where id = 'b1000000-0000-4000-8000-000000000002';
 
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', true);
+
+select lives_ok(
+  $$ update public.deliveries set status = 'in_transit' where id = 'a1000000-0000-4000-8000-000000000001' $$,
+  'a member can update a delivery within their organization'
+);
+
+select throws_ok(
+  $$ update public.deliveries set created_by = '20000000-0000-4000-8000-000000000002' where id = 'a1000000-0000-4000-8000-000000000001' $$,
+  '42501',
+  'Delivery creator cannot be changed',
+  'a member cannot reassign the delivery creator'
+);
+
 select is(
   (select title from public.deliveries where id = 'b1000000-0000-4000-8000-000000000002'),
   'Entrega B',
